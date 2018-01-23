@@ -1,0 +1,13 @@
+version: "3"
+
+services:
+
+  mongodb:
+    build: ./mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/db:/data/db
+      - ./data/configdb:/data/configdb
+    container_name: mongodb
+    restart: always
