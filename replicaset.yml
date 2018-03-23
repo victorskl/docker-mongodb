@@ -1,0 +1,6 @@
+version: "3"
+
+services:
+
+  mongodb:
+    command: ["mongod", "--replSet", "rs0"]

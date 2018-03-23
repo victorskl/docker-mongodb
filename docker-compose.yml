@@ -4,10 +4,12 @@ services:
 
   mongodb:
     build: ./mongodb
+#    command: ["mongod", "--config", "/etc/mongod.conf"]
+#    command: ["mongod", "--replSet", "rs0"]
     ports:
       - "27017:27017"
     volumes:
+#      - ./mongod.conf:/etc/mongod.conf
       - ./data/db:/data/db
-      - ./data/configdb:/data/configdb
     container_name: mongodb
     restart: always
