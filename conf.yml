@@ -1,0 +1,5 @@
+services:
+  mongo:
+    command: [ "mongod", "--config", "/etc/mongod.conf" ]
+    volumes:
+      - ./mongod.conf:/etc/mongod.conf

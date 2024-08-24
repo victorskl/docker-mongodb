@@ -2,51 +2,92 @@
 
 MongoDB using the [official Docker image](https://hub.docker.com/_/mongo/).
 
-### Standalone
+## Local Development
 
 ```
 git clone https://github.com/victorskl/docker-mongodb.git
 cd docker-mongodb
 mkdir -p data
 
-docker-compose build
-docker-compose -p dev up -d
-docker ps
-docker exec -it mongodb bash
-mongo
-> help
-> show dbs
-> exit
+docker compose up -d
+docker compose ps
+
+docker exec -it mongo bash
+mongosh
+test> help
+test> show dbs
+test> use admin
+admin> show collections
+admin> show users
+admin> show roles
+admin> exit
 exit
 ```
 
-The data is persist into `./data` - configured in `docker-compose.yml` volumes setting.
+The data is persist into `./data` - configured in `compose.yml` volumes setting.
 
-### GUI Tools 
+Reset like so:
+```
+docker compose down
+rm -rf ./data
+mkdir -p data
+```
 
-- [Mongo Compass](https://www.mongodb.com/products/compass)
-- [Robo 3T](https://robomongo.org/)
-- http://mongodb-tools.com
+## GUI
 
----
+_desktop_
 
-### Replica Set
+- [Mongo Compass](https://www.mongodb.com/products/tools/compass)
 
 ```
-docker-compose -p dev down
-docker-compose -p dev -f replicaset.yml -f docker-compose.yml up -d
-docker exec -it mongodb bash
-mongo
-> rs.conf()
-> rs.initiate()
-> rs.status()
-> rs.conf()
-> exit
+brew install --cask mongodb-compass
+```
+
+_browser_
+
+```
+docker compose -f express.yml -f compose.yml up -d
+docker compose ps
+```
+
+Open in browser like so:
+```
+open -a "Google Chrome" http://localhost:8081/
+```
+
+```
+docker exec -it mongo bash
+mongosh -u root -p example
+test> show dbs
+test> use admin
+admin> show collections
+admin> exit
+exit
+```
+
+```
+docker compose -f express.yml -f compose.yml down
+```
+
+## Replica Set
+
+```
+docker compose -f replicaset.yml -f compose.yml up -d
+docker compose ps
 ```
 
 - https://docs.mongodb.com/manual/tutorial/convert-standalone-to-replica-set/
 
-### Going back to Standalone
+```
+docker exec -it mongo bash
+mongosh
+> rs.conf()
+> rs.initiate()
+> rs.status()
+> rs.conf()
+```
+
+### Convert Replica Set back to Standalone
 
 - Remove all secondary hosts from replica set
 - Just relaunch without `--replSet`, i.e.
@@ -56,20 +97,22 @@ rs0:PRIMARY> rs.conf()
 rs0:PRIMARY> rs.remove('my-secondary-hostname1:27017')
 rs0:PRIMARY> rs.remove('my-secondary-hostname2:27017')
 
-docker-compose -p dev -f replicaset.yml -f docker-compose.yml down
-docker-compose -p dev up -d
+docker compose -f replicaset.yml -f compose.yml down
 ```
 
-- After relaunched into the standalone mode, proceed to simply drop the [`local`](https://docs.mongodb.com/manual/reference/local-database/) database.
+Restart without replica set like so:
+```
+docker compose up -d
+```
+
+- After relaunched into the standalone mode, simply drop the [`local`](https://docs.mongodb.com/manual/reference/local-database/) database.
 
 ```
 use local
 db.dropDatabase()
 ```
 
-- OR; 
-
-- If you don't want to drop the `local` database, you can, at least, empty the `local.system.replset` collection. This will get back into the replica free state.
+- If you do not want to drop the `local` database, you can, at least, empty the `local.system.replset` collection. This will get back into the replica free state.
 
 ```
 > use local
@@ -82,7 +125,7 @@ WriteResult({ "nRemoved" : 1 })
 >
 ```
 
-- Perhaps; you might also want to check the [oplog](https://docs.mongodb.com/manual/core/replica-set-oplog/) as well. Because `oplog` is the [capped-collection](https://docs.mongodb.com/manual/reference/glossary/#term-capped-collection), you can not remove records from it. To reset the `oplog`, just drop it. Next time, when you re-initiate the replica set, the `oplog` will be created again.
+- Perhaps; you might also want to check the [oplog](https://docs.mongodb.com/manual/core/replica-set-oplog/) as well. Because `oplog` is the [capped-collection](https://www.mongodb.com/docs/manual/reference/glossary/#std-term-capped-collection), you can not remove records from it. To reset the `oplog`, just drop it. Next time, when you re-initiate the replica set, the `oplog` will be created again.
 
 ```
 > use local
@@ -99,7 +142,7 @@ If you like to run with config file:
 
 ```
 cp -v mongod.conf.sample mongod.conf
-docker-compose -p dev -f mongod-with-conf.yml -f docker-compose.yml up -d
+docker compose -f conf.yml -f compose.yml up -d
+docker compose ps
+docker compose -f conf.yml -f compose.yml down
 ```
-
-Or; you could just modify it in `docker-compose.yml`, instead of overriding.
